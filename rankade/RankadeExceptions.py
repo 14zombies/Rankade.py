@@ -22,7 +22,7 @@ class NoValidCredentials(RankadeException):
 
 class ApiErrorResponse(RankadeException):
     """
-        Base class for error response from API. 
+        Base class for error response from API.
         Raised when no appropriate ApiErrorResponse subclass.
         Raised from:
             - Errors.should_raise()

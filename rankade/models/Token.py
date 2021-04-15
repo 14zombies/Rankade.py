@@ -1,24 +1,17 @@
-# TokenAuth.py
+# Token.py
 
 import logging
-
+from dataclasses import dataclass, field
+from typing import Optional
 import jwt
+from .Base import RankadeObject
 
-from .RankadeObject import RankadeObject
 
+@dataclass
+class Token(RankadeObject):
 
-class TokenAuth(RankadeObject):
-
-    def _set_attributes(self, attributes):
-        self._token = attributes.get("token")
-
-    @property
-    def token(self):
-        return self._token
-
-    def __call__(self, r):
-        r.headers['Authorization'] = self._bearer
-        return r
+    token: str
+    _api: Optional["Api"] = field(default=None, init=False)  # type: ignore
 
     @property
     def _bearer(self):
@@ -29,7 +22,7 @@ class TokenAuth(RankadeObject):
         if self.token is None:
             return True
         try:
-            jwt.decode(self._token, options={
+            jwt.decode(self.token, options={
                        'verify_signature': False}, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
             logging.info("Token is expired")

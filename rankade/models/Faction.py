@@ -1,10 +1,14 @@
 # Faction.py
 
-import rankade.Player
-import rankade.RankadeObject
+from dataclasses import InitVar, dataclass, field
+from typing import Any, Dict, List, Optional
+
+from .Player import Player
+from .Base import RankadeObject
 
 
-class Faction(rankade.RankadeObject.RankadeObject):
+@dataclass
+class Faction(RankadeObject):
     """ Represents a faction used within a Match.
     Attributes
     ----------
@@ -27,33 +31,23 @@ class Faction(rankade.RankadeObject.RankadeObject):
         Convenience attribute – returns true if facion is bot faction.
     """
 
-    def __eq__(self, other):
-        return self.rank == other.rank
+    points: str
+    rank: int
+    players: InitVar[List]  # type: ignore
+    name: Optional[str] = None
+    bot: Optional[int] = None
+    winner: Optional[int] = None
+    _players: List[Player] = field(
+        default_factory=list, init=False)
+    countPlayers: Optional[int] = 0
 
-    def __ne__(self, other):
-        return self.rank != other.rank
+    def __post_init__(self, players):
+        for player in players:
+            self._players.append(Player(self._api, **player))
 
-    def __lt__(self, other):
-        return self.rank < other.rank
-
-    def __le__(self, other):
-        return self.rank <= other.rank
-
-    def __gt__(self, other):
-        return self.rank > other.rank
-
-    def __ge__(self, other):
-        return self.rank >= other.rank
-
-    def _set_attributes(self, attributes):
-        self.bot = attributes.get("bot")
-        self.name = attributes.get("name")
-        self.players = []
-        for player in attributes.get("players"):
-            self.players.append(rankade.Player.Player(self._api, player))
-        self.points = attributes.get("points")
-        self.rank = attributes.get("rank")
-        self.winner = attributes.get("winner")
+    @property
+    def players(self) -> List[Player]:
+        return self._players
 
     @property
     def is_bot(self):
@@ -69,5 +63,5 @@ class Faction(rankade.RankadeObject.RankadeObject):
         for player in self.players:
             ids.append(str(player.id))
         faction_json = {"rank": int(self.rank),
-                        "points": str(self.points), "players": ids}
+                        "score": str(self.points), "players": ids}
         return faction_json

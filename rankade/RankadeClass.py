@@ -1,141 +1,134 @@
 # Rankade.py
-import json
-import logging
+from asyncio import AbstractEventLoop
 
-import rankade.Api
-import rankade.Game
-import rankade.Games
-import rankade.Match
-import rankade.MatchStatus
-import rankade.Player
-import rankade.Players
-import rankade.Quota
-import rankade.Rankings
-import rankade.Subsets
+from dataclasses import dataclass
+from typing import List, Optional
 
-from . import RankadeExceptions
+import rankade.api as api
+import rankade.models as models
+from rankade.api import Endpoint
 from .Consts import *
 
 
 class Rankade(object):
 
-    def __init__(self, key_or_token=None, secret=None, base_url=DEFAULT_BASE_URL, loop=None):
-        self._api = rankade.Api.Api(key_or_token, secret, base_url=base_url, loop=loop)
+    def __init__(self, key_or_token: str, secret: Optional[str] = None, base_url: Optional[str] = None, loop: Optional[AbstractEventLoop] = None):
+        self._api = api.Api(
+            key_or_token, secret, base_url=base_url, loop=loop)
 
 #
 # Games
 #
+    async def __aenter__(self) -> "Rankade":
+        return self
 
-    async def get_games(self):
-        endpoint = "games"
-        games_attributes = await self._api.get(endpoint=endpoint)
-        games = rankade.Games.Games(self._api, games_attributes)
-        return games.content
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        print("fuck yeah closed session (from RANKADECLASS)! 😬")
+        await self._api.close()
 
-    async def get_popular_games(self):
-        pass
-        # Not implimented for some reason.
-        # endpoint = "games/popular"
-        # games_attributes = await self._api.get(endpoint=endpoint)
-        # games = rankade.Games.Games(self._api, games_attributes)
-        # return games.content
+    async def get_games(self) -> models.Games:
+        games_response = await self._api.request(endpoint=Endpoint.GAMES)
+        return models.Games(self._api, games_response)
 
-    async def game_search(self, name: str) -> list:
-        if len(name) < 2:
-            raise RankadeExceptions.SearchTooShort(search=name)
+    async def get_popular_games(self) -> models.Games:
+        """Not implimented on server, is in Api documentation,
+        but requests return an error."""
+        raise NotImplementedError("Not implimented on server, request returns an error.")
+        # If ever gets implimented on server this should be uncommented.
+        # games_attributes = await self._api.get(Endpoint.POPULAR)
+        # return models.Games(self._api, games_attributes)
 
-        endpoint = "games/search"
-        params = {'name': name}
-        games_attributes = await self._api.get(endpoint=endpoint,
-                                               params=params
-                                               )
-        games = rankade.Games.Games(self._api, games_attributes)
-        if len(games.content) == 0:
-            logging.info("No results found for game named {}".format(name))
-
-        return games.content
+    async def game_search(self, name: str) -> models.Games:
+        assert isinstance(name, str)
+        # if len(name) < 2:
+        #     raise RankadeExceptions.SearchTooShort(search=name)
+        search_endpoint = Endpoint.SEARCH_GAMES
+        search_endpoint.add_paramater("name", name)
+        games_response = await self._api.request(search_endpoint)
+        return models.Games(self._api, games_response)
 
 #
 # Matches
 #
-    def new_match(self, game: rankade.Game.Game, notes: str):
-        if DRYRUN:
-            params = {"dryrun": DRYRUN}
-        else:
-            params = {}
-        match_attributes = {
-            "id": None,
-            "externalId": None,
-            "date": None,
-            "registrationDate": None,
-            "number": None,
-            "summary": None,
-            "matchType": None,
-            "draw": None,
-            "weight": game.weight,
-            "weightLabel": "",
-            "game": game.__dict__,
-            "factions": None,
-            "notes": notes
-        }
+    def new_match(self, game: models.Game, notes: str) -> models.Match:
+        assert isinstance(game, models.Games)
+        assert isinstance(notes, str)
+        return models.Match(self._api,
+                            weight=game.weight,
+                            weightLabel=game.weightLabel,
+                            game=game.__dict__,
+                            notes=notes,
+                            factions=[]
+                            )
 
-        return rankade.Match.Match(self._api, match_attributes)
+    async def get_match_status(self) -> models.MatchStatus:
+        status_response = await self._api.request(Endpoint.MATCH_STATUS)
+        return models.MatchStatus(self._api, **status_response)
 
-    async def get_match_status(self) -> rankade.MatchStatus.MatchStatus:
-        endpoint = "matches/status"
-        status_attributes = await self._api.get(endpoint=endpoint)
-        status = rankade.MatchStatus.MatchStatus(self._api, status_attributes)
-        return status
+    async def get_all_matches(self) -> models.Matches:
+        matches_response = await self._api.request(Endpoint.MATCHES)
+        return models.Matches(self._api, **matches_response)
 
+    async def get_match_with_id(self) -> Optional[models.Match]:
+        pass
+
+    async def get_matches_with_players(self, player_ids: List[str]) -> models.Matches:
+        return models.Matches(None, None, 0, 0, 0, 0)
+
+    async def get_match_number(self, number) -> Optional[models.Match]:
+        pass
 
 #
 #  Players
 #
-    async def get_all_players(self) -> list:
-        first_page = await self.get_players_page()
-        players = first_page.content
-        next_page = await first_page.next_page()
-        while next_page is not None:
-            players += next_page.content
-            next_page = await next_page.next_page()
-        return players
+    async def get_all_players(self) -> models.Players:
+        players_response = await self._api.request(Endpoint.PLAYERS)
+        return models.Players(self._api, **players_response)
 
-    async def get_players_page(self, page: int = 1) -> rankade.Players.Players:
-        response = await self._api.get(endpoint="players/{}".format(page))
-        return rankade.Players.Players(self._api, response)
+    async def new_ghost_player(self, name: str) -> models.Player:
+        assert isinstance(name, str)
+        ghost_endpoint = Endpoint.PLAYER
+        ghost_endpoint.add_paramater("name", name)
+        ghost_response = await self._api.request(ghost_endpoint)
+        return models.Player(self._api, **ghost_response)
 
 #
 # Quota
 #
-    async def get_quota(self):
-        endpoint = "quota"
-        quota_attributes = await self._api.get(endpoint=endpoint)
-        return rankade.Quota.Quota(self._api, quota_attributes)
+    async def get_quota(self) -> models.Quota:
+        quota_response = await self._api.request(endpoint=Endpoint.QUOTA)
+        return models.Quota(self._api, **quota_response)
 
 #
 # Rankings
 #
-    async def get_rankings(self, subset_id=None, match_number=None, page=None):
-        params = ["rankings"]
-        if isinstance(subset_id, str):
-            params.append(subset_id)
-        if isinstance(match_number, int):
-            params.append(str(match_number))
-        else:
-            params.append("last")
-        if isinstance(page, int):
-            params.append(str(page))
-        else:
-            params.append("1")
-        endpoint = "/".join(params)
+    async def get_rankings(self, subset_id: Optional[str] = None, match_number: Optional[int] = None) -> models.Rankings:
+        assert isinstance(subset_id, (str, type(None)))
+        assert isinstance(match_number, (int, type(None)))
+        ranking_endpoint = Endpoint.RANKINGS
+        # params = ["rankings"]
+        # if isinstance(subset_id, str):
+        #     params.append(subset_id)
+        # if isinstance(match_number, int):
+        #     params.append(str(match_number))
+        # else:
+        #     params.append("last")
+        # if isinstance(page, int):
+        #     params.append(str(page))
+        # else:
+        #     params.append("1")
+        # endpoint = "/".join(params)
 
-        ranking_attributes = await self._api.get(endpoint)
-        return rankade.Rankings.Rankings(self._api, ranking_attributes)
+        ranking_response = await self._api.request(ranking_endpoint)
+        return models.Rankings(self._api, **ranking_response)
 
 #
 # Subsets
 #
-    async def get_all_subsets(self):
-        endpoint = "subsets"
-        subsets_attributes = await self._api.get(endpoint)
-        return rankade.Subsets.Subsets(self._api, subsets_attributes)
+    async def get_subset_with_id(self, id) -> Optional[models.Subset]:
+        assert isinstance(id, (str, type(None)))
+        pass
+
+    async def get_all_subsets(self) -> models.Subsets:
+        subsets_attributes = await self._api.request(Endpoint.SUBSET)
+        return models.Subsets(self._api, subsets_attributes)
