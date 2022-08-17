@@ -5,7 +5,7 @@ from dataclasses import InitVar, dataclass, field
 from typing import Any, Dict, List, Optional, Type
 from datetime import date
 
-from rankade.api import Endpoint
+from rankade.api.Endpoint import Endpoint
 from .Base import RankadeObject, ResultList
 from .Error import Error
 from .Faction import Faction
@@ -34,10 +34,10 @@ class Match(RankadeObject):
     _factions: List = field(default_factory=list, init=False)
 
     def __post_init__(self, game, factions):
-        self._game = Game(self._api, **game)
+        self._game = Game(**game)
         for faction in factions:
             self._factions.append(
-                Faction(self._api, **faction))
+                Faction(**faction))
 
     @property
     def is_draw(self):
@@ -58,8 +58,8 @@ class Match(RankadeObject):
         return self._factions
 
     @property
-    def game(self) -> Game:
-        return self.game
+    def game(self) -> Optional[Game]:
+        return self._game
 
     def add_faction(self, players, rank, points):
         # if not isinstance(players, [rankade.Player.Player]):
@@ -79,7 +79,7 @@ class Match(RankadeObject):
             players_dict.append(player.__dict__)
 
         faction = Faction(self._api, points=points, rank=rank, players=players_dict)
-        self.factions.append(faction)
+        self._factions.append(faction)
 
     def add_bot_faction(self, rank, points):
         bot_player = Player(self._api, id="bot", ghost=0, displayName="bot", icon="")
@@ -94,11 +94,11 @@ class Match(RankadeObject):
 
     def to_json(self):
         json_factions = []
-        for faction in self.factions:
+        for faction in self._factions:
             json_factions.append(faction.to_json())
         match = [{
-            "game": self.game.id,
-            "weight": self.game.weight,
+            "game": self._game.id,
+            "weight": self._game.weight,
             "factions": json_factions,
             "notes": self.notes
         }]

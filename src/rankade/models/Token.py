@@ -15,7 +15,7 @@ class Token(RankadeObject):
 
     @property
     def _bearer(self):
-        return "Bearer {}".format(self.token)
+        return f'Bearer {self.token}'
 
     @property
     def is_invalid(self) -> bool:
@@ -25,11 +25,11 @@ class Token(RankadeObject):
             jwt.decode(self.token, options={
                        'verify_signature': False}, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
-            logging.info("Token is expired")
+            logging.info("☠️ Token is expired")
             return True
         except Exception as e:
-            logging.critical("Token error – {}".format(e))
+            logging.critical(f'⛔️ Token error – {e}')
             return True
         else:
-            logging.info("Token is valid")
+            logging.info("🎟 Token is valid")
             return False

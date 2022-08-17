@@ -4,20 +4,9 @@ class RankadeException(Exception):
     """
         Base Exception, should not be raised directly.
     """
+
     def __init__(self, message):
         self.message = message
-
-
-class NoValidCredentials(RankadeException):
-    """
-        Raised when either no key & secret or no token has been supplied
-        to main Rankade class.
-        Rasied from:
-            - Api.__init__()
-            - Api._credentials_params
-    """
-    def __init__(self, message="No Credentials Supplied"):
-        super().__init__(message)
 
 
 class ApiErrorResponse(RankadeException):
@@ -27,6 +16,7 @@ class ApiErrorResponse(RankadeException):
         Raised from:
             - Errors.should_raise()
     """
+
     def __init__(self, url, verb, status, code="", message=""):
         self.url = url
         self.verb = verb
@@ -45,20 +35,33 @@ class AuthCredentials(ApiErrorResponse):
     pass
 
 
-class Quotas(ApiErrorResponse):
+class MatchValidation(ApiErrorResponse):
     """
-        Code will begin with "Q" and message will contain
-        details of the quota limit reached. Status should be either 429 or 202.
+        Code will begin with "M" and message will contain
+        contain details of validation error with the match.
         Raised from:
             - Errors.should_raise()
     """
     pass
 
 
-class MatchValidation(ApiErrorResponse):
+class NoValidCredentials(RankadeException):
     """
-        Code will begin with "M" and message will contain
-        contain details of validation error with the match.
+        Raised when either no key & secret or no token has been supplied
+        to main Rankade class.
+        Rasied from:
+            - Api.__init__()
+            - Api._credentials_params
+    """
+
+    def __init__(self, message="No Credentials Supplied"):
+        super().__init__(message)
+
+
+class Quotas(ApiErrorResponse):
+    """
+        Code will begin with "Q" and message will contain
+        details of the quota limit reached. Status should be either 429 or 202.
         Raised from:
             - Errors.should_raise()
     """
@@ -72,6 +75,7 @@ class SearchTooShort(RankadeException):
         Raised from:
             - Rankade.game_search()
     """
+
     def __init__(self, search: str = ""):
         self.search = search
         super().__init__("Search must be at least 2 characters.")

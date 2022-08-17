@@ -1,5 +1,5 @@
 # Faction.py
-
+import json
 from dataclasses import InitVar, dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -43,7 +43,7 @@ class Faction(RankadeObject):
 
     def __post_init__(self, players):
         for player in players:
-            self._players.append(Player(self._api, **player))
+            self._players.append(Player(**player))
 
     @property
     def players(self) -> List[Player]:

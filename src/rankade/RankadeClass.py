@@ -23,7 +23,6 @@ class Rankade(object):
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        print("fuck yeah closed session (from RANKADECLASS)! 😬")
         await self._api.close()
 
     async def get_games(self) -> models.Games:
@@ -40,8 +39,6 @@ class Rankade(object):
 
     async def game_search(self, name: str) -> models.Games:
         assert isinstance(name, str)
-        # if len(name) < 2:
-        #     raise RankadeExceptions.SearchTooShort(search=name)
         search_endpoint = Endpoint.SEARCH_GAMES
         search_endpoint.add_paramater("name", name)
         games_response = await self._api.request(search_endpoint)
@@ -51,7 +48,7 @@ class Rankade(object):
 # Matches
 #
     def new_match(self, game: models.Game, notes: str) -> models.Match:
-        assert isinstance(game, models.Games)
+        assert isinstance(game, models.Game)
         assert isinstance(notes, str)
         return models.Match(self._api,
                             weight=game.weight,

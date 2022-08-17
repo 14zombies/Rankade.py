@@ -1,7 +1,7 @@
 # Base.py
 
 from dataclasses import InitVar, dataclass, field
-from typing import Any, List, Optional, Type
+from typing import Any, Optional, Type
 from collections import UserList
 
 
@@ -38,7 +38,7 @@ class ResultList(RankadeObject, UserList):
         List of objects returned by the sever.
     """
     _content_class: Type
-    data: list[RankadeObject] = field(default_factory=list, init=False, repr=False, compare=False)  # type: ignore
+    data: list[RankadeObject] = field(default_factory=list, init=False, repr=False, compare=False)
     data: InitVar[Optional[Any]] = field(repr=False, compare=False, hash=False)
 
     def __post_init__(self, data):
@@ -89,7 +89,6 @@ class Page(ResultList):
     page: InitVar[int]
     totalPages: InitVar[int]
     rowsForPage: InitVar[int]
-
 
     def __post_init__(self, data, *args):
         super().__post_init__(data)

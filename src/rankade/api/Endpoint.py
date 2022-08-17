@@ -49,27 +49,26 @@ class Endpoint_Request:
         page_str = ""
         subset_str = ""
         if self.page is not None:
-            page_str = "/"+str(self.page)
+            page_str = "/" + str(self.page)
         if self.match is None:
             match_str = "/last"
         else:
-            match_str = "/".str(self.match)
+            match_str = "/" + str(self.match)
         if self.subset is not None:
-            subset_str = "/"+self.subset
+            subset_str = "/" + self.subset
         return self._path.format(subset=subset_str, match=match_str, page=page_str)
 
 
 class Endpoint(Enum):
     AUTH = Endpoint_Request(auth=False, paginated=False,
-                            method="GET", path="/auth")
+                            method="GET", path="auth")
     GAMES = Endpoint_Request(auth=True, paginated=False,
                              method="GET", path="games")
     POPULAR_GAMES = Endpoint_Request(
         auth=True, paginated=False, method="GET", path="games/popular")
     SEARCH_GAMES = Endpoint_Request(
         auth=True, paginated=False, method="GET", path="games/search")
-    MATCH = Endpoint_Request(auth=True, paginated=False,
-                             method="POST", path="match")
+    MATCH = Endpoint_Request(auth=True, paginated=False, method="POST", path="matches/match")
     MATCH_EXISTS = Endpoint_Request(
         auth=True, paginated=False, method="GET", path="matches/match/exists")
     MATCH_STATUS = Endpoint_Request(

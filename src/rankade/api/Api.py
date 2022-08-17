@@ -83,29 +83,32 @@ class Api(object):
     def _make_url_for(self, endpoint="") -> str:
         endpoint = endpoint.format(page="", subset="")
         if self._base_url[-1] != "/":
-            self.base_url = self._base_url + "/"
+            self._base_url = self._base_url + "/"
         return self._base_url + endpoint
 
     async def _request_jwt(self) -> Optional[Token]:
-        if not isinstance(self._key, str) and not isinstance(self._secret, str):
+        if isinstance(self._key, str) and isinstance(self._secret, str):
+            logging.info("🎟 Requesting new token")
+            auth_endpoint = Endpoint.AUTH
+            auth_endpoint.add_paramater("key", self._key)
+            auth_endpoint.add_paramater("secret", self._secret)
+            token_response = await self.request(auth_endpoint)
+            return Token(**token_response)
+        else:
             raise NoValidCredentials("Unable to renew token as no key or secret provided.")
-        logging.info("Requesting new token")
-        auth_endpoint = Endpoint.AUTH
-        auth_endpoint.add_paramater("key", self._key)
-        auth_endpoint.add_paramater("secret", self._secret)
-        token_response = await self.request(auth_endpoint)
-        return Token(**token_response)
 
     async def _paginated_request(self, endpoint: Endpoint) -> Mapping[str, Any]:
         first_page = await self._request(endpoint)
         last_page_no = first_page.get("totalPages") or 1
-        for i in range(2, last_page_no+1):
+        for i in range(2, last_page_no + 1):
             endpoint.page = i
             next_page = await self._request(endpoint)
             new_data = next_page.get("data")
             if new_data is None:
                 break
-            first_page.get("data").extend(new_data)
+            data = first_page.get("data")
+            if data is not None:
+                data.extend(new_data)
         return first_page
 
     async def _request(self, endpoint: Endpoint) -> Mapping[str, Any]:
@@ -128,9 +131,11 @@ class Api(object):
             response_object = None
             response_json = None
             try:
-                # response_json = await response.json()
-                response_json = js.loads(await response.text())
+                logging.debug(f'🙃 {response}')
+
+                response_json = await response.json()
                 response_object = RankadeResponse(**response_json)
+                logging.debug(f'😗 {response_object}')
 
                 # response_json["success"] XOR response_json["errors"]
                 # 1 should be None, if both or neither are then bad response.
@@ -143,12 +148,12 @@ class Api(object):
                 errors_json = {
                     "errors": [{
                         "code": "",
-                        "message": "Unable to decode data from server.{}".format(e)
+                        "message": f'Unable to decode data from server.{e}'
                     }]
                 }
 
                 if response_object is not None and response_object.errors is not None:
-                    errors_json = response_object.errors
+                    errors_json = response_object
                 errors = Errors(
                     self,
                     response.url.human_repr(),
