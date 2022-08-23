@@ -1,0 +1,25 @@
+---
+kind: pipeline
+type: docker
+name: Rankade.py tag
+
+steps:
+  - name: pypi_publish
+    image: plugins/pypi
+    settings:
+      username:
+        from_secret: username
+      password:
+        from_secret: password
+      repository:
+        https://git.14zombies.com/api/packages/cal/pypi
+
+trigger:
+  event: 
+    - tag
+
+---
+kind: signature
+hmac: a471eee75a9c73a0111257e6a153818eed68d9bd7d8a987914f618fb50607a6a
+
+...
