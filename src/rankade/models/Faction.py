@@ -59,9 +59,7 @@ class Faction(RankadeObject):
     def to_json(self):
         """Returns json for server post request.
         """
-        ids = []
-        for player in self.players:
-            ids.append(str(player.id))
+        ids = [str(p) for p in self._players]
         faction_json = {"rank": int(self.rank),
                         "score": str(self.points), "players": ids}
         return faction_json

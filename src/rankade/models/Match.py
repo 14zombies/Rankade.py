@@ -93,9 +93,7 @@ class Match(RankadeObject):
         await self._api.request(new_match_endpoint)
 
     def to_json(self):
-        json_factions = []
-        for faction in self._factions:
-            json_factions.append(faction.to_json())
+        json_factions = [f.to_json() for f in self._factions]
         match = [{
             "game": self._game.id,
             "weight": self._game.weight,
