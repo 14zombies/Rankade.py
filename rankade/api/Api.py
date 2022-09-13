@@ -10,7 +10,7 @@ import aiohttp
 from rankade import RankadeExceptions
 from rankade.Consts import DEFAULT_BASE_URL
 
-from ..models import Errors
+from rankade.models import Errors
 from ..models.Token import Token
 from ..RankadeExceptions import *
 from .Endpoint import Endpoint

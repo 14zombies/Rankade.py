@@ -1,7 +1,6 @@
 # Rankade.py
 from asyncio import AbstractEventLoop
 
-from dataclasses import dataclass
 from typing import List, Optional
 
 import rankade.api as api
