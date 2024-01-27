@@ -29,7 +29,9 @@ steps:
       username: __token__
       password:
         from_secret: pypi_token
-
+trigger:
+  event:
+    - tag
 ---
 ####
 #
@@ -107,8 +109,6 @@ trigger:
 kind: pipeline
 type: docker
 name: manifest (Docs)
-clone:
-  disable: true
 steps:
   - name: manifest
     image: plugins/manifest
@@ -147,8 +147,8 @@ depends_on:
   - build linux-arm64 (Docs)
 trigger:
   event:
-    - push
     - tag
+    - push
 
 
 ---

@@ -15,6 +15,7 @@ classifiers = [
 dependencies = [
   "aiohttp>=3.7",
   "PyJWT>=2.4",
+  "enum_tools",
 ]
 description = "Unofficial Python async wrapper for the Rankade API"
 
@@ -24,6 +25,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 [project.optional-dependencies]
+all = ["rankade-py[dev,docs,tests]"]
 dev = [
   "coverage>=7.4",
   "build",
@@ -45,7 +47,6 @@ tests = [
   "enumtools",
   "aioresponses",
 ]
-all = ["rankade-py[dev,docs,tests]"]
 
 [project.urls]
 Changelog = "https://github.com/14zombies/Rankade.py/blob/master/CHANGELOG.md"
@@ -108,5 +109,3 @@ exclude = [
   "docs/**",
 ]
 include = ["rankade"]
-
-

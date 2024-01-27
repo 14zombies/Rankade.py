@@ -1,3 +1,7 @@
+## v0.1.2
+- Updated: enum_tools added to dependencies.
+- Updated: .drone.yml to fix minor build issues.
+
 ## v0.1.1
 - Fixed: setup.py repair.
 - Fixed: rankade.consts/rankade.Consts mixup.
