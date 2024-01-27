@@ -7,7 +7,7 @@ from typing import ClassVar, Optional, Type, Union
 from rankade.api.Api import JSON
 from rankade.RankadeExceptions import RankadeException
 
-from ..consts import BOT_ID
+from ..Consts import BOT_ID
 from .Base import RankadeObject, ResultList
 from .Faction import Faction, Factions
 from .Game import Game

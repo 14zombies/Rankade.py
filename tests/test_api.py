@@ -6,7 +6,7 @@ from aioresponses import aioresponses
 
 from rankade.api import Api, Token
 from rankade.api.Endpoint import Endpoint, Endpoint_Request
-from rankade.consts import DEFAULT_BASE_URL
+from rankade.Consts import DEFAULT_BASE_URL
 from rankade.RankadeExceptions import (
     ApiErrorResponse,
     AuthCredentials,

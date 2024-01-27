@@ -1,5 +1,6 @@
 # setup.py
 # Minimum to keep compatibility with drone pypi.
-import setuptools
+from setuptools import setup
 
-setuptools.setup()
+if __name__ == "__main__":
+    setup()

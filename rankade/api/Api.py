@@ -9,7 +9,7 @@ from typing import Any, Dict, List, MutableMapping, Optional, TypeAlias, Union
 import aiohttp
 
 from .. import RankadeExceptions
-from ..consts import (
+from ..Consts import (
     AUTH_ERROR_PREFIX,
     AUTH_ERROR_STATUS,
     DEFAULT_BASE_URL,

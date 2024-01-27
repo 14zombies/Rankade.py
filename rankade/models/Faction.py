@@ -6,7 +6,7 @@ from typing import ClassVar, Type
 
 from rankade.api.Api import JSON
 
-from ..consts import BOT_ID
+from ..Consts import BOT_ID
 from .Base import RankadeObject, ResultList
 from .Player import Players
 

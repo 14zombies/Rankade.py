@@ -3,7 +3,7 @@ __title__ = "rankade"
 __author__ = "14zombies"
 __license__ = "MIT"
 __copyright__ = "Copyright 2021-present 14zombies"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 import logging
 
