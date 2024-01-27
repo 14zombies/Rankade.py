@@ -1,65 +1,73 @@
-# Faction.py
-import json
-from dataclasses import InitVar, dataclass, field
-from typing import Any, Dict, List, Optional
+# rankade.models.Faction.py
+from __future__ import annotations
 
-from .Player import Player
-from .Base import RankadeObject
+from dataclasses import dataclass
+from typing import ClassVar, Type
+
+from rankade.api.Api import JSON
+
+from ..consts import BOT_ID
+from .Base import RankadeObject, ResultList
+from .Player import Players
 
 
-@dataclass
+@dataclass(kw_only=True, slots=True)
 class Faction(RankadeObject):
-    """ Represents a faction used within a Match.
-    Attributes
-    ----------
-    name : str
-        Faction Name,
-    players : Dict[rankade.Player.Player]
-        List of faction players.
-    points : str
-        Faction points/score,
-    rank : int
-        Faction ranking compared to other factions.
-    winner : int
-        Raw data from api 1 is faction is a winner, 0 if not.
-        See Also
-        --------
-        is_winner
-    is_winner : bool
-        Convenience attribute – returns true if faction is winning faction.
-    is_bot : bool
-        Convenience attribute – returns true if facion is bot faction.
+    """Represents a faction used within a Match."""
+
+    name: str
+    """Faction Name"""
+    points: str
+    """Faction points/score,"""
+    rank: int
+    """Faction ranking compared to other factions."""
+    bot: bool = False
+    """returns true if faction is bot faction."""
+    winner: bool = False
+    """returns true if faction is winning faction."""
+    players: Players
+    """List of faction players."""
+    countPlayers: int = 0
+    """Number of players in the faction."""
+
+    def __post_init__(self):
+        if isinstance(self.bot, int) or self.players[0].id == BOT_ID:  # pyright: ignore[reportUnnecessaryIsInstance]
+            self.bot = bool(self.bot)
+        if isinstance(self.winner, int):  # pyright: ignore[reportUnnecessaryIsInstance]
+            self.winner = bool(self.winner)
+        if not isinstance(self.players, Players):  # pyright: ignore[reportUnnecessaryIsInstance]
+            self.players = Players.from_dict(data_dict=self.players)
+        self.countPlayers = len(self.players)
+
+    @property
+    def is_bot(self) -> bool:
+        """Convenience attribute - returns true if faction is bot faction."""
+        return self.bot
+
+    @property
+    def is_winner(self) -> bool:
+        """Convenience attribute - returns true if faction is winning faction."""
+        return self.winner
+
+    def as_dict(self) -> JSON:
+        """
+        Returns a custom dictionary for new match server post request.
+        """
+        ids: JSON = [str(p.id) for p in self.players]
+        faction_dict: JSON = {
+            "rank": int(self.rank),
+            "score": str(self.points),
+            "players": ids,
+        }
+        return faction_dict
+
+
+@dataclass(kw_only=True, slots=True)
+class Factions(ResultList[Faction]):
+    """
+    Represents a list of faction objects returned by the Rankade server.
+    Individual faction objects returned by the server can be accessed in the same way as a regular list.
     """
 
-    points: str
-    rank: int
-    players: InitVar[List]  # type: ignore
-    name: Optional[str] = None
-    bot: Optional[int] = None
-    winner: Optional[int] = None
-    _players: List[Player] = field(
-        default_factory=list, init=False)
-    countPlayers: Optional[int] = 0
-
-    def __post_init__(self, players):
-        for player in players:
-            self._players.append(Player(**player))
-
-    @property
-    def players(self) -> List[Player]:
-        return self._players
-
-    @property
-    def is_bot(self):
-        if self.bot is not None:
-            return bool(self.bot)
-        else:
-            return self.players[0].id == "bot"
-
-    def to_json(self):
-        """Returns json for server post request.
-        """
-        ids = [str(p.id) for p in self._players]
-        faction_json = {"rank": int(self.rank),
-                        "score": str(self.points), "players": ids}
-        return faction_json
+    _content_class: ClassVar[Type[RankadeObject]] = Faction
+    """Classvar to allow the an object in the list to be created from a dict returned from the server."""

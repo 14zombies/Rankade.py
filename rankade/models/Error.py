@@ -1,112 +1,65 @@
-# Error.py
-
-from dataclasses import InitVar, dataclass, field
-from typing import Any, Dict, Optional
-
-from rankade import RankadeExceptions
+# rankade.models.Error.py
+from dataclasses import dataclass, field
+from typing import ClassVar, Type
 
 from .Base import RankadeObject, ResultList
 
 
-@dataclass
+@dataclass(kw_only=True, slots=True)
 class Error(RankadeObject):
-    """Represents a single error returned by the Rankade API.
-        List of codes & messages returned is here:
-         - https://rankade.com/api/#error-responses
-         - https://rankade.com/api/#quota-and-limits
-         - https://rankade.com/api/#get-auth
-         - https://rankade.com/api/#post-players-player
-         - https://rankade.com/api/#post-matches-match
+    """
+    Represents a single error returned by the Rankade API.
 
-    Parameters
-    ----------
-    _api : :class:`Api`
-        Api client.
-    message : :class:`str`
-        Error message returned by the server.
-    code : :class:`str`
-        Error code of returned error.
+    :::{seealso}
+    List of codes & messages returned can be found in the Rankade API documentation.
+        - [Error Responses](https://rankade.com/api/#error-responses)
+        - [Quota and Limits](https://rankade.com/api/#quota-and-limits)
+        - [Get Auth](https://rankade.com/api/#get-auth)
+        - [Post Players Player](https://rankade.com/api/#post-players-player)
+        - [Post Matched Match](https://rankade.com/api/#post-matches-match)
+    :::
 
+    :param str message: Error message returned by the server.
+    :param str code: Error code of returned error.
 
-    Atributes
-    ----------
-    code : :class:`str`
-        Error code in returned error.
-        If first character is:
-            - A – Auth
-            - Q – Quota
-            - M - Match Validation
+    """
 
-    message : :class:`str`
-        Error message returned by the server.
+    code: str
+    """Error code in returned error.
+        If first character will tell you what type of error it is:
+            - A: Auth
+            - Q: Quota
+            - M: Match Validation
     """
     message: str
-    code: str
+    """Error message returned by the server."""
 
 
-@dataclass
-class Errors(ResultList):
+@dataclass(kw_only=True, slots=True)
+class Errors(ResultList[Error]):
 
-    """Represents the error object returned by the Rankade
-    server.
-    Error object has an array of errors.
+    """
+    Represents a list of error objects returned by the Rankade server.
+    Individual error objects returned by the server can be accessed in the same way as a regular list.
 
-    Parameters
-    ----------
-    api : :class:`Api`
-        Api client.
-    url : :class:`str`
-        Queried url that provided the error response.
-    verb : :class:`str`
-        HTTP method used in query (GET, POST, etc)
-    status : :class:`int`
-        HTTP status code returned with the error response.
-    data : :class:`List[Dict[str, Any]]`
-        List of errors returned in json dict.
+    :param str url: Queried URL that provided the error response.
+    :param str verb: HTTP method used in query (GET, POST, etc)
+    :param int status: HTTP status code returned with the error response.
+    :param MutableMapping[str, Any] data: List of errors returned in json dict.
 
 
-    Notes
-    -----
-    - I have only ever received a single error.
+    :::{note}
+    I have only ever received a single error.
     As the spec is ambiguous this class caters for more than one error.
+    :::
+
     """
 
-    url: str
-    verb: str
-    status: int
-    errors: InitVar[Optional[Dict[str, Any]]]  # type: ignore
-    _content_class: Any = field(init=False, default=Error)
-    data: Any = field(default=None, init=False)
+    _content_class: ClassVar[Type[RankadeObject]] = Error
 
-    def __post_init__(self, errors):
-        return super().__post_init__(errors)
-
-    def should_raise(self) -> Optional[RankadeExceptions.ApiErrorResponse]:
-        """Raises appropriate Exception from each Error recieved from server.
-
-        Raises
-        ------
-        ApiErrorResponse & subclasses.
-
-        See Also
-        --------
-        :class:`rankade.RankadeExceptions`
-            Full explination of each Exception.
-        """
-        for error in self.data:
-            exception_type = RankadeExceptions.ApiErrorResponse
-
-            if self.status == 202 and error.code[0] == "M":
-                exception_type = RankadeExceptions.MatchValidation
-            elif self.status == 401 or error.code == "A001":
-                exception_type = RankadeExceptions.AuthCredentials
-            elif self.status == 429 or (self.status == 202
-                                        and error.code[0] == "Q"):
-                exception_type = RankadeExceptions.Quotas
-            return exception_type(
-                self.verb,
-                self.url,
-                self.status,
-                error.code,
-                error.message
-            )
+    url: str = field(default="")
+    """Queried url that provided the error response."""
+    verb: str = field(default="")
+    """HTTP method used in query (GET, POST, etc)"""
+    status: int = field(default=0)
+    """HTTP status code returned with the error response."""

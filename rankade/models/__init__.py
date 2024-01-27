@@ -1,25 +1,37 @@
-from .Base import Page, RankadeObject, ResultList
+# rankade.models.__init__.py
+from .Base import RankadeObject, ResultList
 from .Error import Error, Errors
-from .Faction import Faction
+from .Faction import Faction, Factions
 from .Game import Game, Games
-from .Match import Match, Matches, MatchStatus, NewMatchResponse
+from .Match import Match, Matches
+from .NewMatch import NewMatch, NewMatchList
+from .NewMatchResponse import (
+    MatchStatus,
+    NewMatchResponse,
+    NewMatchReturn,
+    NewMatchReturnList,
+)
 from .Player import Player, Players
 from .Quota import Quota
 from .Ranking import Ranking, Rankings
 from .Subset import Subset, Subsets
-from .Token import Token
 
 __all__ = [
+    "ResultList",
     "Error",
     "Errors",
     "Faction",
+    "Factions",
     "Game",
     "Games",
     "Match",
     "Matches",
     "MatchStatus",
+    "NewMatch",
+    "NewMatchList",
     "NewMatchResponse",
-    "Page",
+    "NewMatchReturn",
+    "NewMatchReturnList",
     "Player",
     "Players",
     "Quota",
@@ -29,5 +41,4 @@ __all__ = [
     "ResultList",
     "Subset",
     "Subsets",
-    "Token",
 ]

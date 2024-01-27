@@ -1,0 +1,23 @@
+image: git.14zombies.com/cal/rankade.py:dev
+{{#if build.tag}}
+{{#unless (contains "-rc" build.tag)}}
+{{#unless (contains "-dev" build.tag)}}
+tags: 
+  - {{trimPrefix "v" build.tag}}
+  - "latest"
+  - "dev"
+{{/unless}}
+{{/unless}}
+{{/if}}
+manifests:
+  -
+    image: git.14zombies.com/cal/rankade.py:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  -
+    image: git.14zombies.com/cal/rankade.py:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm64
+    platform:
+      variant: v8
+      architecture: arm64
+      os: linux

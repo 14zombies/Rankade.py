@@ -1,3 +1,112 @@
+[project]
+authors = [
+  {name = "Calum Crawford", email = "c@calumcrawford.com"},
+]
+name = "rankade.py"
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "aiohttp>=3.7",
+  "PyJWT>=2.4",
+]
+description = "Unofficial Python async wrapper for the Rankade API"
+
+dynamic = ["version"]
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = [
+  "coverage>=7.4",
+  "build",
+  "packaging",
+  "twine",
+]
+docs = [
+  "sphinx",
+  "sphinxawesome-theme",
+  "myst-parser",
+  "enum-tools[sphinx]",
+  "sphinx-sitemap",
+  "sphinx-autodoc2",
+  "linkify-it-py",
+  "sphinxcontrib.spelling",
+]
+tests = [
+  "rankade-py[dev]",
+  "enumtools",
+  "aioresponses",
+]
+all = ["rankade-py[dev,docs,tests]"]
+
+[project.urls]
+Changelog = "https://github.com/14zombies/Rankade.py/blob/master/CHANGELOG.md"
+Documentation = "https://calumcrawford.com/rankadepy"
+Homepage = "https://calumcrawford.com/rankadepy"
+Issues = "https://github.com/14zombies/Rankade.py/issues"
+Repository = "https://github.com/14zombies/Rankade.py.git"
+
 [build-system]
-requires = ["setuptools >=42", "wheel"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools >=61"]
+
+[tool.setuptools]
+packages = ["rankade", "rankade.api", "rankade.models"]
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.setuptools.dynamic]
+version = {attr = "rankade.__version__"}
+
+[tool.ruff]
+line-length = 120
+respect-gitignore = true
+select = [
+  "I", # isort
+  "B", # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "PGH", # pygrep-hooks
+  "RUF", # ruff
+  "W", # pycodestyle
+  "YTT", # flake8-2020
+  "FIX", # flake8-fixme
+]
+
+[tool.coverage.run]
+command_line = "--module unittest discover --verbose"
+data_file = "coverage/coverage"
+omit = ["tests/__init__.py"]
+source = ["rankade"]
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "from api.Api import Api",
+]
+show_missing = true
+skip_empty = true
+sort = "Cover"
+
+[tool.coverage.lcov]
+output = "coverage/coverage.lcov"
+
+[tool.pyright]
+disableLanguageServices = true
+disableOrganizeImports = true
+exclude = [
+  "tests/**",
+  "**/__pycache__",
+  "docs/**",
+]
+include = ["rankade"]
+
+

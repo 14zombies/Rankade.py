@@ -1,12 +1,42 @@
-# __init__.py
+# rankade.__init__.py
+__title__ = "rankade"
+__author__ = "14zombies"
+__license__ = "MIT"
+__copyright__ = "Copyright 2021-present 14zombies"
+__version__ = "0.1.0"
 
-from rankade.RankadeClass import Rankade
-from rankade.RankadeExceptions import *
+import logging
+
+from rankade import RankadeExceptions
 from rankade.models import *
+from rankade.Rankade import Rankade
 
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-__title__ = 'rankade'
-__author__ = '14zombies'
-__license__ = 'MIT'
-__copyright__ = 'Copyright 2021-present 14zombies'
-__version__ = '0.0.2'
+__all__ = [
+    "Rankade",
+    "RankadeExceptions",
+    "Error",
+    "Errors",
+    "Faction",
+    "Factions",
+    "Game",
+    "Games",
+    "Match",
+    "Matches",
+    "MatchStatus",
+    "NewMatch",
+    "NewMatchList",
+    "NewMatchResponse",
+    "NewMatchReturn",
+    "NewMatchReturnList",
+    "Player",
+    "Players",
+    "Quota",
+    "RankadeObject",
+    "Ranking",
+    "Rankings",
+    "ResultList",
+    "Subset",
+    "Subsets",
+]

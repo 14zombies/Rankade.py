@@ -1,10 +1,11 @@
-# RankadeResponse.py
-
+# rankade.api.RankadeResponse.py
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, MutableMapping, Optional
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class RankadeResponse(object):
-    success: Optional[Mapping[str, Any]] = None
-    errors: Optional[List[Dict[str, Any]]] = None
+    """First response from server, should never leave the Api class and be surfaced to user of the package."""
+
+    success: Optional[MutableMapping[str, Any]] = None
+    errors: Optional[MutableMapping[str, Any]] = None
