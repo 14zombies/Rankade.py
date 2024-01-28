@@ -292,7 +292,7 @@ class Api(object):
         Should only be called manually if not using API as a context manager.
         :::
         """
-        if self._session is None:
+        if self._session is None or self._session.closed:
             logger.debug("Creating ClientSession.")
             self._session = aiohttp.ClientSession(raise_for_status=self._check_request)
 

@@ -1,3 +1,6 @@
+## v0.1.3
+- Fixed: Issue with session being closed, but not None in rankade.Api.
+
 ## v0.1.2
 - Updated: enum_tools added to dependencies.
 - Updated: .drone.yml to fix minor build issues.
