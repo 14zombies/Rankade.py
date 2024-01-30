@@ -31,6 +31,7 @@ dev = [
   "build",
   "packaging",
   "twine",
+  "wheel",
 ]
 docs = [
   "sphinx",
@@ -57,7 +58,7 @@ Repository = "https://github.com/14zombies/Rankade.py.git"
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools >=61"]
+requires = ["setuptools >=61", "wheel"]
 
 [tool.setuptools]
 packages = ["rankade", "rankade.api", "rankade.models"]

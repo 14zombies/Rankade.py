@@ -134,7 +134,7 @@ class Rankade(object):
         """Get a list of all the players in the group."""
         async with self._api as api:
             players_response = await api.request(endpoint=Endpoint.PLAYERS)
-            return models.Players(**players_response)
+            return models.Players.from_dict(data_dict=players_response)
 
     async def new_ghost_player(self, name: str) -> models.Player:
         """

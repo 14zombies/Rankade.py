@@ -1,4 +1,8 @@
-## v0.1.3
+## v0.1.5
+- Fixed: Test TestRankadePlayers.test_get_all_players
+- Fixed: Rankade.get_all_players now returns actual Player's in the Players object.
+
+## v0.1.4
 - Fixed: Issue with session being closed, but not None in rankade.Api.
 
 ## v0.1.2

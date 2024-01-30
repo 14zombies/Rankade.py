@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import AsyncMock, patch
 
+import consts
+
 import rankade
 from rankade import models
 from rankade.api.Endpoint import Endpoint
-
-from . import consts
 
 
 class TestRankade(unittest.IsolatedAsyncioTestCase):
@@ -157,6 +157,7 @@ class TestRankadePlayers(TestRankade):
     async def test_get_all_players(self, mock_response: AsyncMock):
         result = await self.rankade.get_all_players()
         self.assertIsInstance(result, models.Players)
+        self.assertIsInstance(result[0], models.Player)
         self.assertEqual(len(result), 4)
         call = mock_response.call_args[0][0].endpoint
         self.assertIs(call, Endpoint.PLAYERS)

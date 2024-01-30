@@ -2,6 +2,7 @@ import json
 import unittest
 from unittest.mock import AsyncMock, patch
 
+import consts
 from aioresponses import aioresponses
 
 from rankade.api import Api, Token
@@ -15,8 +16,6 @@ from rankade.RankadeExceptions import (
     Quotas,
     RankadeException,
 )
-
-from . import consts
 
 
 class TestApiInit(unittest.TestCase):
