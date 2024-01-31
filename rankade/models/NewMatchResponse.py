@@ -76,6 +76,8 @@ class NewMatchResponse(RankadeObject):
     """List of rejected matches with errors."""
     accepted: NewMatchReturnList
     """List of accepted matches."""
+    dryrun: bool
+    """Reports True if posting was a test and not acutally submitted."""
 
     def __init__(
         self,
@@ -84,6 +86,7 @@ class NewMatchResponse(RankadeObject):
         rejectedCount: int,
         rejected: Dict[str, Any],
         accepted: Dict[str, Any],
+        dryrun: bool = False,
     ):
         """
         :param int total: Total matches submitted.
@@ -91,6 +94,7 @@ class NewMatchResponse(RankadeObject):
         :param int rejectedCount: Total matches rejected.
         :param Dict[str, Any] rejected: List of rejected matches with errors.
         :param Dict[str, Any] accepted: List of accepted matches.
+        :param bool dryrun: Reports True if posting was a test and not acutally submitted.
         """
         self.total = total
         self.acceptedCount = acceptedCount
@@ -98,6 +102,8 @@ class NewMatchResponse(RankadeObject):
 
         self.rejected = NewMatchReturnList.from_dict(data_dict=rejected)
         self.accepted = NewMatchReturnList.from_dict(data_dict=accepted)
+        if not isinstance(dryrun, bool):  # pyright: ignore[reportUnnecessaryIsInstance]
+            self.dryrun = bool(dryrun)
 
     @property
     def has_error(self) -> bool:

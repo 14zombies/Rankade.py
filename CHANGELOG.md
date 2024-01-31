@@ -1,3 +1,7 @@
+## v0.1.6
+- Added: dryrun parameter to NewMatchResponse.
+- Fixed: Drone signing.
+
 ## v0.1.5
 - Fixed: Test TestRankadePlayers.test_get_all_players
 - Fixed: Rankade.get_all_players now returns actual Player's in the Players object.
