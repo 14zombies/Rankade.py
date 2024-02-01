@@ -15,7 +15,7 @@
 
 ## v0.1.1
 - Fixed: setup.py repair.
-- Fixed: rankade.consts/rankade.Consts mixup.
+- Fixed: rankade.consts/rankade.Consts mix-up.
 
 ## v0.1.0
 - Added: Type hints to all the things.

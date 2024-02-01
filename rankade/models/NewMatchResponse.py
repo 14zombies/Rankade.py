@@ -77,7 +77,7 @@ class NewMatchResponse(RankadeObject):
     accepted: NewMatchReturnList
     """List of accepted matches."""
     dryrun: bool
-    """Reports True if posting was a test and not acutally submitted."""
+    """Reports True if posting was a test and not actually submitted."""
 
     def __init__(
         self,
@@ -94,7 +94,7 @@ class NewMatchResponse(RankadeObject):
         :param int rejectedCount: Total matches rejected.
         :param Dict[str, Any] rejected: List of rejected matches with errors.
         :param Dict[str, Any] accepted: List of accepted matches.
-        :param bool dryrun: Reports True if posting was a test and not acutally submitted.
+        :param bool dryrun: Reports True if posting was a test and not actually submitted.
         """
         self.total = total
         self.acceptedCount = acceptedCount
