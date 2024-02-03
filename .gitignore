@@ -1,6 +1,6 @@
 TODO.md
-typings/
-coverage/
+stubs/
+
 docs/api/
 # Byte-compiled / optimized / DLL files
 __pycache__/

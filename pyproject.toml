@@ -63,6 +63,9 @@ requires = ["setuptools >=61", "wheel"]
 [tool.setuptools]
 packages = ["rankade", "rankade.api", "rankade.models"]
 
+[tool.setuptools.package-data]
+"rankade" = ["py.typed"]
+
 [tool.distutils.bdist_wheel]
 universal = true
 
@@ -103,10 +106,12 @@ output = "coverage/coverage.lcov"
 
 [tool.pyright]
 disableLanguageServices = true
-disableOrganizeImports = true
+disableOrganizeImports = false
 exclude = [
   "tests/**",
   "**/__pycache__",
   "docs/**",
+  "**/*.pyi"
 ]
+stubPath = "./stubs"
 include = ["rankade"]
