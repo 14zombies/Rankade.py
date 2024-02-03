@@ -131,7 +131,7 @@ class Endpoint_Request:
     subset: Optional[str] = field(default=None)
     """Subset Id to be requested"""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.endpoint.paginated:
             self.page = 1
 

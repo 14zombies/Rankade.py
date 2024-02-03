@@ -49,7 +49,7 @@ class NewMatchReturn(RankadeObject):
     errors: Optional[Errors] = None
     """List of errors in match, if appropriate."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.errors, List):
             self.errors = Errors.from_dict(data_dict=self.errors)  # pyright: ignore[reportArgumentType]
 

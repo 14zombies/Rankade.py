@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import jwt
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass(kw_only=True, slots=True)
@@ -22,7 +22,7 @@ class Token:
     See [rfc7518 section-3.1](https://datatracker.ietf.org/doc/html/rfc7518#section-3.1)
     for a full list. "HS256" by default."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.algorithms is None:
             self.algorithms = ["HS256"]
 

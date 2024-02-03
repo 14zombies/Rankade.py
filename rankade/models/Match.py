@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import ClassVar, Dict, List, Type
 
-from .Base import Page, RankadeObject
+from .Base import Page, RankadeObject, ResultList
 from .Faction import Faction, Factions
 from .Game import Game
 from .Player import Player, Players
@@ -25,7 +25,7 @@ class Match(RankadeObject):
     game: Game
     factions: Factions
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.draw, (str, int)):  # pyright: ignore[reportUnnecessaryIsInstance]
             self.draw = bool(self.draw)
         if isinstance(self.date, str):
@@ -42,31 +42,35 @@ class Match(RankadeObject):
 
     @property
     def is_draw(self) -> bool:
+        """Convenience attribute - returns true if match was a draw."""
         return bool(self.draw)
 
     @property
     def winning_factions(self) -> List[Faction]:
+        """Returns winning factions."""
         return [faction for faction in self.factions if faction.rank == 1]
 
     @property
     def winning_players(self) -> List[Player]:
+        """Returns players from winning factions"""
         faction_players = [faction.players for faction in self.winning_factions]
         return [player for faction in faction_players for player in faction]
 
     @property
     def players(self) -> Players:
+        """Returns all players from all factions."""
         players = [faction.players for faction in self.factions]
         flat_players = [x for xs in players for x in xs]
         return Players(data=flat_players)
 
     @property
     def player_ids(self) -> List[str]:
+        """Returns all player ids from all factions."""
         return [p.id for p in self.players]
 
 
 @dataclass(kw_only=True, slots=True)
-class Matches(Page[Match]):
-
+class Matches(ResultList[Match], Page):
     """
     Represents a list of match objects returned by the Rankade server.
     Individual match objects returned by the server can be accessed in the same way as a regular list.

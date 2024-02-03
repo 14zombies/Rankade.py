@@ -41,19 +41,17 @@ class NewMatch(RankadeObject):
     """Match weight, chosen from this list: ultralight, light, midlight, normal, heavy, massive.
     A heavier game results in larger variations in ree score, a lighter game in smaller ones. We strongly suggest you to set weights in a way that most of the matches have normal weight. See FAQ for details."""
 
-    def add_bot_faction(self, rank: int, points: str, name: str = ""):
+    def add_bot_faction(self, rank: int, points: str, name: str = "") -> None:
         """
         Convenience method to add a bot faction to the match.
         """
         bot_player = Players(data=[Player(id=BOT_ID, ghost=False, displayName=BOT_ID, icon="")])
         self.add_faction(players=bot_player, rank=rank, points=points, name=name, bot=True)
 
-    def add_faction(self, players: Union[Players, Player], rank: int, points: str, name: str = "", bot: bool = False):
+    def add_faction(self, players: Players, rank: int, points: str, name: str = "", bot: bool = False) -> None:
         """
         Convenience method to add a faction to the match.
         """
-        if isinstance(players, Player):
-            players = Players(data=[players])
         if len(players) < 1:
             raise RankadeException(message="A faction must contain at least 1 player")
         bot_players = [player for player in players if player.id == BOT_ID]
@@ -65,6 +63,15 @@ class NewMatch(RankadeObject):
             self.factions = Factions(data=[faction])
         else:
             self.factions.append(faction)
+
+    def add_single_player_faction(
+        self, player: Player, rank: int, points: str, name: str = "", bot: bool = False
+    ) -> None:
+        """
+        Convenience method to add a faction to the match, with just one player.
+        """
+        players = Players(data=[player])
+        self.add_faction(players=players, rank=rank, points=points, name=name, bot=bot)
 
     def as_dict(self) -> JSON:
         """

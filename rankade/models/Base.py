@@ -12,6 +12,7 @@ from typing import (
     MutableMapping,
     MutableSequence,
     Optional,
+    Self,
     Type,
     TypeVar,
     Union,
@@ -20,7 +21,7 @@ from typing import (
 T = TypeVar("T", bound="RankadeObject")
 
 
-@dataclass(slots=True)
+@dataclass()
 class RankadeObject(ABC):  # noqa: B024
 
     """
@@ -31,7 +32,7 @@ class RankadeObject(ABC):  # noqa: B024
     pass
 
 
-@dataclass(kw_only=True, slots=True)
+@dataclass(kw_only=True)
 class ResultList(UserList[T], RankadeObject):
     """
     Base class for lists of items from server.
@@ -45,7 +46,7 @@ class ResultList(UserList[T], RankadeObject):
     """List of RankadeObjects returned by the sever."""
 
     @classmethod
-    def from_dict(cls, data_dict: Union[MutableMapping[str, Any], MutableSequence[MutableMapping[str, Any]]]):
+    def from_dict(cls, data_dict: Union[MutableMapping[str, Any], MutableSequence[MutableMapping[str, Any]]]) -> Self:
         """
         Create a ResultList instance from a dict.
         """
@@ -59,8 +60,8 @@ class ResultList(UserList[T], RankadeObject):
         return cls(**copyof_data_dict, data=data)
 
 
-@dataclass(kw_only=True, slots=True)
-class Page(ResultList[T]):
+@dataclass(kw_only=True)
+class Page(object):
     """
     Base class for page of items from server .
 

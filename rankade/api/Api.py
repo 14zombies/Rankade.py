@@ -4,7 +4,16 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, MutableMapping, Optional, TypeAlias, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    MutableMapping,
+    Optional,
+    ParamSpec,
+    TypeAlias,
+    Union,
+)
 
 import aiohttp
 
@@ -23,7 +32,7 @@ from .Endpoint import Endpoint, Endpoint_Request
 from .RankadeResponse import RankadeResponse
 from .Token import Token
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 JSON: TypeAlias = Dict[str, "JSON"] | List["JSON"] | str | int | float | bool | None
 """TypeAlias = Dict[str, "JSON"] | List["JSON"] | str | int | float | bool | None"""
@@ -93,7 +102,7 @@ class Api(object):
         self._session = session
 
     @property
-    def _credentials_params(self):
+    def _credentials_params(self) -> PARAMS:
         """A dictionary containing the key and secret for Rankade API for use as parameters in the http request."""
         return {"key": self._key, "secret": self._secret}
 
@@ -198,7 +207,7 @@ class Api(object):
             except json.JSONDecodeError as exp:
                 raise await self._exception_of_last_resort(raw_response, message="JSON Decoding failed.") from exp
 
-    async def _check_request(self, raw_response: aiohttp.ClientResponse):
+    async def _check_request(self, raw_response: aiohttp.ClientResponse) -> None:
         """
         Overrides aiohttp.ClientRequest.raise_for_status to allow better error handling.
 

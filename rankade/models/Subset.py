@@ -35,7 +35,7 @@ class Subset(RankadeObject):
     lastMatch: Match
     """Last match included in the subset."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.isMain, int):  # pyright: ignore[reportUnnecessaryIsInstance]
             self.isMain = bool(self.isMain)
         if isinstance(self.isCustom, int):  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -52,7 +52,7 @@ class Subset(RankadeObject):
             self.lastMatch = Match(**self.lastMatch)  # pyright: ignore[reportUnknownArgumentType]
 
     @property
-    def matches(self):
+    def matches(self) -> Matches:
         """Includes bot the first and last match in the subset."""
         return Matches(data=[self.firstMatch, self.lastMatch], totalMatches=2)
 

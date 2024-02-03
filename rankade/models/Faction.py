@@ -30,7 +30,7 @@ class Faction(RankadeObject):
     countPlayers: int = 0
     """Number of players in the faction."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.bot, int) or self.players[0].id == BOT_ID:  # pyright: ignore[reportUnnecessaryIsInstance]
             self.bot = bool(self.bot)
         if isinstance(self.winner, int):  # pyright: ignore[reportUnnecessaryIsInstance]

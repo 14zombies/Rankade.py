@@ -3,12 +3,36 @@ __title__ = "rankade"
 __author__ = "14zombies"
 __license__ = "MIT"
 __copyright__ = "Copyright 2021-present 14zombies"
-__version__ = "0.1.6"
+__version__ = "0.2.0"
 
 import logging
 
 from rankade import RankadeExceptions
-from rankade.models import *
+from rankade.models import (
+    Error,
+    Errors,
+    Faction,
+    Factions,
+    Game,
+    Games,
+    Match,
+    Matches,
+    MatchStatus,
+    NewMatch,
+    NewMatchList,
+    NewMatchResponse,
+    NewMatchReturn,
+    NewMatchReturnList,
+    Player,
+    Players,
+    Quota,
+    RankadeObject,
+    Ranking,
+    Rankings,
+    ResultList,
+    Subset,
+    Subsets,
+)
 from rankade.Rankade import Rankade
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
