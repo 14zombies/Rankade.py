@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar, Dict, Self, Type
+from typing import ClassVar, Dict, Optional, Type
 
 from .Base import Page, RankadeObject, ResultList
 from .Match import Match
@@ -78,9 +78,9 @@ class Rankings(ResultList[Ranking], Page):
     _content_class: ClassVar[Type[RankadeObject]] = Ranking
     """Classvar to allow the an object in the list to be created from a dict returned from the server."""
 
-    match: Match
+    match: Optional[Match]
     """Match after which the rankings were calculated"""
-    subset: Subset
+    subset: Optional[Subset]
     """Subset which the ranking applies to."""
 
     def __post_init__(self) -> None:
@@ -92,30 +92,18 @@ class Rankings(ResultList[Ranking], Page):
 
         self.data.sort(key=lambda position: position.position)
 
-    @property
-    def sorted_by_position(self) -> Self:
-        """Rankings sorted by position."""
-        r = self[:]
-        r.sort(key=lambda position: position.position)
-        return r
+    def sort_by_position(self) -> None:
+        """Sort Rankings by position."""
+        self.sort(key=lambda position: position.position)
 
-    @property
-    def sorted_by_delta_position(self) -> Self:
-        """Rankings sorted by change of position."""
-        r = self[:]
-        r.sort(reverse=True, key=lambda position: position.deltaPosition)
-        return r
+    def sort_by_delta_position(self) -> None:
+        """Sort Rankings by change of position."""
+        self.sort(reverse=True, key=lambda position: position.deltaPosition)
 
-    @property
-    def sorted_by_ree(self) -> Self:
-        """Rankings sorted by Ree score."""
-        r = self[:]
-        r.sort(reverse=True, key=lambda position: position.ree)
-        return r
+    def sort_by_ree(self) -> None:
+        """Sort Rankings by Ree score."""
+        self.sort(reverse=True, key=lambda position: position.ree)
 
-    @property
-    def sorted_by_delta_ree(self) -> Self:
-        """Rankings sorted by change of Ree score."""
-        r = self[:]
-        r.sort(reverse=True, key=lambda position: position.deltaRee)
-        return r
+    def sort_by_delta_ree(self) -> None:
+        """Sort Rankings by change of Ree score."""
+        self.sort(reverse=True, key=lambda position: position.deltaRee)

@@ -1,5 +1,6 @@
 import json
 import unittest
+from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List
 
@@ -554,14 +555,27 @@ class TestRankings(TestModels):
         # match testing
         self.assertIsInstance(rankings.match, models.Match)
         self.check_match_Jowlqr5o0qA(rankings.match)
-        self.assertListEqual(rankings.sorted_by_position, [rankings[0], rankings[1], rankings[2], rankings[3]])
-        self.check_player_emmephisto(rankings.sorted_by_position[0].player)
-        self.assertListEqual(rankings.sorted_by_delta_position, [rankings[2], rankings[1], rankings[0], rankings[3]])
-        self.check_player_captain_nemo(rankings.sorted_by_delta_position[0].player)
-        self.assertListEqual(rankings.sorted_by_ree, [rankings[0], rankings[1], rankings[2], rankings[3]])
-        self.check_player_emmephisto(rankings.sorted_by_ree[0].player)
-        self.assertListEqual(rankings.sorted_by_delta_ree, [rankings[2], rankings[1], rankings[0], rankings[3]])
-        self.check_player_captain_nemo(rankings.sorted_by_delta_ree[0].player)
+        original_rankings = deepcopy(rankings)
+        rankings.sort_by_position()
+        self.assertListEqual(
+            rankings.data, [original_rankings[0], original_rankings[1], original_rankings[2], original_rankings[3]]
+        )
+        self.check_player_emmephisto(rankings[0].player)
+        rankings.sort_by_delta_position()
+        self.assertListEqual(
+            rankings.data, [original_rankings[2], original_rankings[1], original_rankings[0], original_rankings[3]]
+        )
+        self.check_player_captain_nemo(rankings[0].player)
+        rankings.sort_by_ree()
+        self.assertListEqual(
+            rankings.data, [original_rankings[0], original_rankings[1], original_rankings[2], original_rankings[3]]
+        )
+        self.check_player_emmephisto(rankings[0].player)
+        rankings.sort_by_delta_ree()
+        self.assertListEqual(
+            rankings.data, [original_rankings[2], original_rankings[1], original_rankings[0], original_rankings[3]]
+        )
+        self.check_player_captain_nemo(rankings[0].player)
 
 
 class TestSubsets(TestModels):
