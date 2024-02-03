@@ -88,7 +88,7 @@ select = [
 
 [tool.coverage.run]
 command_line = "--module unittest discover --verbose"
-data_file = "coverage/coverage"
+data_file = "cover/coverage"
 omit = ["tests/__init__.py"]
 source = ["rankade"]
 
@@ -102,7 +102,7 @@ skip_empty = true
 sort = "Cover"
 
 [tool.coverage.lcov]
-output = "coverage/coverage.lcov"
+output = "cover/coverage.lcov"
 
 [tool.pyright]
 disableLanguageServices = true
