@@ -4,11 +4,11 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List
 
-import consts
-
 from rankade import models
 from rankade.api import RankadeResponse
 from rankade.api.Token import Token
+
+from . import consts
 
 
 class TestModels(unittest.TestCase):

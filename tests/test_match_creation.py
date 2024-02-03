@@ -1,9 +1,9 @@
 import unittest
 
-import consts
-
 from rankade import Rankade, models
 from rankade.RankadeExceptions import RankadeException
+
+from . import consts
 
 
 class TestMatchCreation(unittest.IsolatedAsyncioTestCase):

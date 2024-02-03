@@ -1,8 +1,9 @@
+import asyncio
 import json
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
-import consts
+import aiohttp
 from aioresponses import aioresponses
 
 from rankade.api import Api, Token
@@ -16,6 +17,12 @@ from rankade.RankadeExceptions import (
     Quotas,
     RankadeException,
 )
+
+from . import consts
+
+# __del__ in aiohttp.Clientsession and asyncio.BaseEventLoop were causing warning and attribute errors,
+# They are patched out for the async tests, not sure if it's the right way to do this but it works.
+# Will need to revisit this at a later date.
 
 
 class TestApiInit(unittest.TestCase):
@@ -78,52 +85,72 @@ class TestApi(unittest.TestCase):
 
 
 class TestApiAsync(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self.token = consts.make_token(consts.valid_token_message)
+        self.session = aiohttp.ClientSession()
+        self.api = Api(key_or_token=self.token, session=self.session)
+
+    async def asyncTearDown(self) -> None:
+        await self.session.close()
+
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @patch(target="rankade.api.Api.Api._request", return_value=consts.token_returnvalue["success"])
     async def test_request_jwt(self, mock_response: AsyncMock):
         key = "key"
         secret = "secret"
-        async with Api(key_or_token=key, secret=secret) as api:
-            with self.assertLogs(level="DEBUG"):
-                api.token = await api._request_jwt()
-                mock_response.assert_awaited_once()
-                called_params = mock_response.call_args.kwargs["endpoint"].params
-                self.assertEqual(called_params["key"], key)
-                self.assertEqual(called_params["secret"], secret)
-                self.assertEqual(mock_response.call_args.kwargs["endpoint"].endpoint, Endpoint.AUTH)
-                self.assertIsInstance(api.token, Token)
+        api = Api(key_or_token=key, secret=secret, session=self.session)
+        with self.assertLogs(level="DEBUG"):
+            api.token = await api._request_jwt()
+            mock_response.assert_awaited_once()
+            called_params = mock_response.call_args.kwargs["endpoint"].params
+            self.assertEqual(called_params["key"], key)
+            self.assertEqual(called_params["secret"], secret)
+            self.assertEqual(mock_response.call_args.kwargs["endpoint"].endpoint, Endpoint.AUTH)
+            self.assertIsInstance(api.token, Token)
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @patch(target="rankade.api.Api.Api._request", return_value=consts.token_returnvalue["success"])
     async def test_request_jwt_bad_key(self, mock_response: AsyncMock):
-        async with Api(key_or_token="key", secret="secret") as api:
-            api._key = 42
-            with self.assertRaises(NoValidCredentials):
-                api.token = await api._request_jwt()
-            mock_response.assert_not_called()
-            mock_response.assert_not_awaited()
+        api = Api(key_or_token="key", secret="secret", session=self.session)
+        api._key = 42
+        with self.assertRaises(NoValidCredentials):
+            api.token = await api._request_jwt()
+        mock_response.assert_not_called()
+        mock_response.assert_not_awaited()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @patch(target="rankade.api.Api.Api._request", return_value=consts.token_returnvalue["success"])
     async def test_request_jwt_bad_secret(self, mock_response: AsyncMock):
-        async with Api(key_or_token="key", secret="secret") as api:
-            api._secret = 42
-            with self.assertRaises(NoValidCredentials):
-                api.token = await api._request_jwt()
-                mock_response.assert_not_called()
+        api = Api(key_or_token="key", secret="secret", session=self.session)
+        api._secret = 42
+        with self.assertRaises(NoValidCredentials):
+            api.token = await api._request_jwt()
+            mock_response.assert_not_called()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @patch(target="rankade.api.Api.Api._request", return_value=consts.token_returnvalue["success"])
     async def test_request_with_non_paginated(self, mock_response: AsyncMock):
-        async with Api(key_or_token="key", secret="secret") as api:
-            endpoint = Endpoint.AUTH
-            await api.request(endpoint=endpoint)
-            mock_response.assert_awaited_once()
+        api = Api(key_or_token="key", secret="secret", session=self.session)
+        endpoint = Endpoint.AUTH
+        await api.request(endpoint=endpoint)
+        mock_response.assert_awaited_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @patch(target="rankade.api.Api.Api._paginated_request", return_value=consts.token_returnvalue["success"])
     async def test_request_with_paginated(self, mock_response: AsyncMock):
-        async with Api(key_or_token="key", secret="secret") as api:
-            endpoint = Endpoint.PLAYERS
-            await api.request(endpoint=endpoint)
-            mock_response.assert_awaited_once()
+        api = Api(key_or_token="key", secret="secret", session=self.session)
+        endpoint = Endpoint.PLAYERS
+        await api.request(endpoint=endpoint)
+        mock_response.assert_awaited_once()
 
     @aioresponses()
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     async def test_paginated_request(self, mock_response: aioresponses):
         token = consts.make_token(consts.valid_token_message)
         url_1 = f"{consts.base_url}matches/1"
@@ -131,13 +158,15 @@ class TestApiAsync(unittest.IsolatedAsyncioTestCase):
         mock_response.get(url=url_1, body=json.dumps(consts.matches_returnvalue_page_1))
         mock_response.get(url=url_2, body=json.dumps(consts.matches_returnvalue_page_2))
 
-        async with Api(key_or_token=token) as api:
-            endpoint = Endpoint_Request(Endpoint.MATCHES)
-            result = await api._paginated_request(endpoint=endpoint)
-            # self.assertEqual(mock_response.call_count, 2)
-            self.assertEqual(len(result["data"]), 6)
+        api = Api(key_or_token=token, session=self.session)
+        endpoint = Endpoint_Request(Endpoint.MATCHES)
+        result = await api._paginated_request(endpoint=endpoint)
+        # self.assertEqual(mock_response.call_count, 2)
+        self.assertEqual(len(result["data"]), 6)
 
     @aioresponses()
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     async def test__request(self, mock_response: aioresponses):
         url = f"{consts.base_url}auth"
         status = 200
@@ -148,13 +177,15 @@ class TestApiAsync(unittest.IsolatedAsyncioTestCase):
             status=status,
             body=body,
         )
-        async with Api(key_or_token="key", secret="secret") as api:
-            endpoint = Endpoint_Request(Endpoint.AUTH)
-            result = await api._request(endpoint=endpoint)
-            mock_response.assert_any_call(url)
-            self.assertEqual(result, consts.token_returnvalue["success"])
+        api = Api(key_or_token="key", secret="secret", session=self.session)
+        endpoint = Endpoint_Request(Endpoint.AUTH)
+        result = await api._request(endpoint=endpoint)
+        mock_response.assert_any_call(url)
+        self.assertEqual(result, consts.token_returnvalue["success"])
 
     @aioresponses()
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     async def test__request_with_no_session(self, mock_response: aioresponses):
         url = f"{consts.base_url}auth"
         status = 200
@@ -165,15 +196,17 @@ class TestApiAsync(unittest.IsolatedAsyncioTestCase):
             status=status,
             body=body,
         )
-        async with Api(key_or_token="key", secret="secret") as api:
-            endpoint = Endpoint_Request(Endpoint.AUTH)
-            # Close session to prevent warning, before setting _session to None.
-            await api._session.close()
-            api._session = None
-            with self.assertRaises(RankadeException):
-                await api._request(endpoint=endpoint)
+        api = Api(key_or_token="key", secret="secret", session=self.session)
+        endpoint = Endpoint_Request(Endpoint.AUTH)
+        # Close session to prevent warning, before setting _session to None.
+        await api._session.close()
+        api._session = None
+        with self.assertRaises(RankadeException):
+            await api._request(endpoint=endpoint)
 
     @aioresponses()
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     async def test__request_with_auth(self, mock_response: aioresponses):
         key = "key"
         secret = "secret"
@@ -186,16 +219,18 @@ class TestApiAsync(unittest.IsolatedAsyncioTestCase):
 
         mock_response.get(url=auth_url, status=status, body=auth_body)
         mock_response.get(url=quota_url, status=status, body=quota_body)
-        async with Api(key_or_token=key, secret=secret) as api:
-            endpoint = Endpoint_Request(Endpoint.QUOTA)
-            result = await api._request(endpoint=endpoint)
-            mock_response.assert_any_call(auth_url)
-            mock_response.assert_any_call(quota_url)
-            self.assertEqual(result, consts.quota_returnvalue["success"])
+        api = Api(key_or_token=key, secret=secret, session=self.session)
+        endpoint = Endpoint_Request(Endpoint.QUOTA)
+        result = await api._request(endpoint=endpoint)
+        mock_response.assert_any_call(auth_url)
+        mock_response.assert_any_call(quota_url)
+        self.assertEqual(result, consts.quota_returnvalue["success"])
 
     # Passes with patched version of aioresponses until PR 251 is merged.
     # https://github.com/pnuckowski/aioresponses/pull/251/
     @aioresponses()
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     async def test__request_with_status_error(self, mock_response: aioresponses):
         key = "key"
         secret = "secret"
@@ -203,160 +238,177 @@ class TestApiAsync(unittest.IsolatedAsyncioTestCase):
         status = 401
         body = json.dumps(consts.errors_returnvalue)
         mock_response.get(url=url, status=status, body=body)
-        async with Api(key_or_token=key, secret=secret) as api:
-            endpoint = Endpoint_Request(endpoint=Endpoint._TEST)
-            with self.assertRaises(AuthCredentials):
-                await api._request(endpoint=endpoint)
+        api = Api(key_or_token=key, secret=secret, session=self.session)
+        endpoint = Endpoint_Request(endpoint=Endpoint._TEST)
+        with self.assertRaises(AuthCredentials):
+            await api._request(endpoint=endpoint)
 
 
 class TestRaises(unittest.IsolatedAsyncioTestCase):
-    def setUp(self) -> None:
-        token = consts.make_token(consts.valid_token_message)
-        self.api = Api(key_or_token=token)
+    async def asyncSetUp(self) -> None:
+        self.token = consts.make_token(consts.valid_token_message)
+        self.session = aiohttp.ClientSession()
+        self.api = Api(key_or_token=self.token, session=self.session)
 
+    async def asyncTearDown(self) -> None:
+        await self.session.close()
+
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_ApiErrorResponse(self, mock_response: aioresponses):
         mock_response.get(url=f"{consts.base_url}test", body=json.dumps({"success": {}, "errors": {}}))
         with self.assertRaises(ApiErrorResponse) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
+
         self.assertEqual('Unexpected response from Server. {"success": {}, "errors": {}}', exception.exception.message)
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_ContentTypeError(self, mock_response: aioresponses):
         mock_response.get(url=f"{consts.base_url}test", content_type="video/mpeg")
         with self.assertRaises(ApiErrorResponse) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual("aiohttp Invalid content type: video/mpeg. ", exception.exception.message)
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_JSONDecodeError(self, mock_response: aioresponses):
         mock_response.get(url=f"{consts.base_url}test", body="{ 'foo': {}")
         with self.assertRaises(ApiErrorResponse) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual("JSON Decoding failed. { 'foo': {}", exception.exception.message)
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_not_200_errors_none(self, mock_response: aioresponses):
         mock_response.get(url=f"{consts.base_url}test", status=201, body=json.dumps(consts.quota_returnvalue))
         with self.assertRaises(ApiErrorResponse) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             f"No errors returned from server, despite error code. {json.dumps(consts.quota_returnvalue)}",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_not_200_no_errors(self, mock_response: aioresponses):
         mock_response.get(url=f"{consts.base_url}test", status=201, body='{"errors":[]}')
         with self.assertRaises(ApiErrorResponse) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             'Errors response empty. {"errors":[]}',
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_400_M001(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=400, body=json.dumps(consts.errors_match_validation_400_M001)
         )
         with self.assertRaises(MatchValidation) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             "Invalid JSON message in request.",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_201_M002(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=400, body=json.dumps(consts.errors_match_validation_202_M002)
         )
         with self.assertRaises(MatchValidation) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             "JSON schema validation error.",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_401_A001(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=401, body=json.dumps(consts.errors_match_validation_401_A001)
         )
         with self.assertRaises(AuthCredentials) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             "Invalid credentials or client disabled.",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_403_A001(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=403, body=json.dumps(consts.errors_match_validation_401_A001)
         )
         with self.assertRaises(AuthCredentials) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             "Invalid credentials or client disabled.",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_202_Q001(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=202, body=json.dumps(consts.errors_match_validation_429_Q001)
         )
         with self.assertRaises(Quotas) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             "API calls per year limit has been reached.",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_429_Q001(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=429, body=json.dumps(consts.errors_match_validation_429_Q001)
         )
         with self.assertRaises(Quotas) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             "API calls per year limit has been reached.",
             exception.exception.message,
         )
         mock_response.assert_called_once()
 
+    @patch("aiohttp.ClientSession.__del__", Mock())
+    @patch("asyncio.BaseEventLoop.__del__", Mock())
     @aioresponses()
     async def test_raises_500(self, mock_response: aioresponses):
         mock_response.get(
             url=f"{consts.base_url}test", status=500, body=json.dumps(consts.errors_match_validation_500_R001)
         )
         with self.assertRaises(ApiErrorResponse) as exception:
-            async with self.api as api:
-                result = await api.request(Endpoint._TEST)
+            result = await self.api.request(Endpoint._TEST)
         self.assertEqual(
             'An unknown error occured while dealing with the request. {"errors": [{"code": "R001", "message": "Generic error."}]}',
             exception.exception.message,
