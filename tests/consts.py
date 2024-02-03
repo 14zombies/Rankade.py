@@ -553,6 +553,25 @@ match_post_returnvalue = {
         "rejectedCount": 1,
     }
 }
+match_post_dryrun_returnvalue = {
+    "success": {
+        "total": 2,
+        "accepted": [{"index": 0, "id": "wweq", "name": null, "errors": []}],
+        "acceptedCount": 1,
+        "rejected": [
+            {
+                "index": 1,
+                "id": "312",
+                "name": null,
+                "errors": [
+                    {"code": "M003", "message": "A match with the same external identifier was already accepted"}
+                ],
+            }
+        ],
+        "rejectedCount": 1,
+        "dryrun": 1,
+    }
+}
 match_post_dict = {
     "data": [
         {

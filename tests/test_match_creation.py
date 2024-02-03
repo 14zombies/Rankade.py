@@ -62,7 +62,7 @@ class TestMatchCreation(unittest.IsolatedAsyncioTestCase):
         player = models.Players.from_dict(data_dict=consts.players_returnvalue["success"])[0]
         self.assertIsInstance(player, models.Player)
         match = models.NewMatch(game=self.game, weight=self.game.weight, notes=self.notes)
-        match.add_faction(name="", players=player, rank=rank, points=points)
+        match.add_single_player_faction(name="", player=player, rank=rank, points=points)
         self.assertIsInstance(match.factions, models.Factions)
         self.assertEqual(len(match.factions), 1)
         self.assertIsInstance(match.factions[0].players, models.Players)

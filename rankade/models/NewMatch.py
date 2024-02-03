@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import ClassVar, Optional, Type, Union
+from typing import ClassVar, Optional, Type
 
 from rankade.api.Api import JSON
 from rankade.RankadeExceptions import RankadeException
