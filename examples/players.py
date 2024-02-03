@@ -15,9 +15,9 @@ async def main():
     key = os.getenv("RANKADE_KEY", "")
     secret = os.getenv("RANKADE_SECRET")
 
-    rankade_api = rankade.Rankade(key_or_token=key, secret=secret)
-    result = await rankade_api.get_all_players()
-    print(result[0])
+    async with rankade.Rankade(key_or_token=key, secret=secret) as rankade_api:
+        result = await rankade_api.get_all_players()
+        print(result[0])
 
 
 if __name__ == "__main__":

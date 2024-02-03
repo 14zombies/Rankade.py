@@ -12,9 +12,28 @@ import rankade.models as models
 from rankade.api import Api, Endpoint
 from rankade.api.Api import PARAMS
 
+logger: logging.Logger = logging.getLogger(__name__)
 
-class Rankade(object):
-    """Main wrapper around the Rankade Api. Use this class along with it's methods to access the Api."""
+
+class Rankade(AbstractAsyncContextManager["Rankade"]):
+    """Main wrapper around the Rankade Api. Use this class along with it's methods to access the Api.
+    It is generally best to use this as a context manager as it will manage the creation and cleanup of the ClientSession.
+
+    ```python
+        async with Rankade(...) as rank:
+            result = rank.request(...)
+    ```
+    It can also be used without the context manager, if you are managing the ClientSession & error handling yourself.
+
+    ```python
+        rank = rankade(...)
+        async rank.start()
+        async rank.request(...)
+        ...
+        async rank.stop()
+    ```
+
+    """
 
     def __init__(
         self,
@@ -23,7 +42,39 @@ class Rankade(object):
         base_url: Optional[str] = None,
         session: Optional[aiohttp.ClientSession] = None,
     ):
+        self._session = session
         self._api = Api(key_or_token, secret, base_url=base_url, session=session)
+
+    async def start(self) -> None:
+        """
+        :::{versionadded} 0.2.0
+        :::
+        Creates a Client session if none was passed through.
+
+        :::{note}
+        Should only be called manually if not using Rankade as a context manager.
+        :::
+        """
+        logger.debug("Context started.")
+        if self._session is None or self._session.closed:
+            logger.debug("Creating ClientSession.")
+            self._session = aiohttp.ClientSession()
+
+    async def stop(self) -> None:
+        """
+        :::{versionadded} 0.2.0
+        :::
+        Closes the Client session.
+
+        :::{note}
+        Should only be called manually if not using Rankade as a context manager.
+        :::
+
+        """
+        logger.debug("Context finishing.")
+        if self._session:
+            logger.debug("Closing ClientSession.")
+            await self._session.close()
 
     """
     Games
@@ -31,9 +82,9 @@ class Rankade(object):
 
     async def get_games(self) -> models.Games:
         """Returns the list of the group's games (i.e. games with at least one match played within the group)."""
-        async with self._api as api:
-            games_response = await api.request(endpoint=Endpoint.GAMES)
-            return models.Games.from_dict(data_dict=games_response)
+
+        games_response = await self._api.request(endpoint=Endpoint.GAMES)
+        return models.Games.from_dict(data_dict=games_response)
 
     async def get_popular_games(self) -> models.Games:
         """
@@ -54,25 +105,25 @@ class Rankade(object):
 
         :param name: Name of game to be searched for
         """
-        async with self._api as api:
-            search_endpoint = Endpoint.GAMES_SEARCH
-            params: PARAMS = {"name": name}
-            games_response = await api.request(endpoint=search_endpoint, params=params)
-            return models.Games.from_dict(data_dict=games_response)
+        search_endpoint = Endpoint.GAMES_SEARCH
+        params: PARAMS = {"name": name}
+        games_response = await self._api.request(endpoint=search_endpoint, params=params)
+        return models.Games.from_dict(data_dict=games_response)
 
     async def new_game_with_bggId(self, bggId: int) -> models.Game:
+        """Add a new game by [Board Game Geek)[https://boardgamegeek.com/] ID."""
         params: PARAMS = {"bggId": bggId}
         return await self._new_game_with(params=params)
 
     async def new_game_with_name(self, name: str) -> models.Game:
+        """Add a new game by name."""
         params: PARAMS = {"name": name}
         return await self._new_game_with(params=params)
 
     async def _new_game_with(self, params: PARAMS) -> models.Game:
-        async with self._api as api:
-            result = await api.request(endpoint=Endpoint.GAME, params=params)
-            games = models.Games.from_dict(data_dict=result)
-            return games[0]
+        result = await self._api.request(endpoint=Endpoint.GAME, params=params)
+        games = models.Games.from_dict(data_dict=result)
+        return games[0]
 
     """
     Matches
@@ -85,24 +136,21 @@ class Rankade(object):
         :params models.NewMatch match: Completed new match model.
         :params bool dry_run: For testing, allows for debugging without actually saving the match or using any of the groups Quota.
         """
-        params: dict[str, Union[str, int]] = {}
+        params: PARAMS = {}
         if dry_run:
-            params = {"dryrun": "true"}
-        async with self._api as api:
-            result = await api.request(endpoint=Endpoint.MATCH, json=match.as_dict(), params=params)
-            return models.NewMatchResponse(**result)
+            params["dryrun"] = "true"
+        result = await self._api.request(endpoint=Endpoint.MATCH, json=match.as_dict(), params=params)
+        return models.NewMatchResponse(**result)
 
     async def get_match_status(self) -> models.MatchStatus:
         """Get the status of matches posted by the API."""
-        async with self._api as api:
-            status_response = await api.request(endpoint=Endpoint.MATCH_STATUS)
-            return models.MatchStatus(**status_response)
+        status_response = await self._api.request(endpoint=Endpoint.MATCH_STATUS)
+        return models.MatchStatus(**status_response)
 
     async def get_all_matches(self) -> models.Matches:
         """Get all Matches from the group."""
-        async with self._api as api:
-            matches_response = await api.request(endpoint=Endpoint.MATCHES)
-            return models.Matches.from_dict(data_dict=matches_response)
+        matches_response = await self._api.request(endpoint=Endpoint.MATCHES)
+        return models.Matches.from_dict(data_dict=matches_response)
 
     async def get_match_with_id(self, id: str) -> Optional[models.Match]:
         """
@@ -137,20 +185,17 @@ class Rankade(object):
 
     async def get_all_players(self) -> models.Players:
         """Get a list of all the players in the group."""
-        async with self._api as api:
-            players_response = await api.request(endpoint=Endpoint.PLAYERS)
-            return models.Players.from_dict(data_dict=players_response)
+        players_response = await self._api.request(endpoint=Endpoint.PLAYERS)
+        return models.Players.from_dict(data_dict=players_response)
 
     async def new_ghost_player(self, name: str) -> models.Player:
         """
-        Make a new ghost player to add to the group.
+        Make a new ghost player to add to the group. [What is a ghost user](https://rankade.com/frequently-asked-question/3/what-is-a-ghost-user/67)
         There is a limit on Ghost users see [Quotas and Limits](https://rankade.com/api/#quota-and-limits).
         """
-        assert isinstance(name, str)
-        async with self._api as api:
-            params: PARAMS = {"name": name}
-            ghost_response = await api.request(endpoint=Endpoint.PLAYER, params=params)
-            return models.Players.from_dict(data_dict=ghost_response)[0]
+        params: PARAMS = {"name": name}
+        ghost_response = await self._api.request(endpoint=Endpoint.PLAYER, params=params)
+        return models.Players.from_dict(data_dict=ghost_response)[0]
 
     """
     Quota
@@ -158,9 +203,8 @@ class Rankade(object):
 
     async def get_quota(self) -> models.Quota:
         """Returns current quota usage percentage"""
-        async with self._api as api:
-            quota_response = await api.request(endpoint=Endpoint.QUOTA)
-            return models.Quota(**quota_response)
+        quota_response = await self._api.request(endpoint=Endpoint.QUOTA)
+        return models.Quota(**quota_response)
 
     """
     Rankings
@@ -173,11 +217,8 @@ class Rankade(object):
         :param subset_id: Id of the subset to be used.
         :param match_number: Retrieve subset results starting at match number provided.
         """
-        assert isinstance(subset_id, (str, type(None)))
-        assert isinstance(match_number, (int, type(None)))
-        async with self._api as api:
-            ranking_response = await api.request(endpoint=Endpoint.RANKINGS, subset=subset_id, match=match_number)
-            return models.Rankings.from_dict(data_dict=ranking_response)
+        ranking_response = await self._api.request(endpoint=Endpoint.RANKINGS, subset=subset_id, match=match_number)
+        return models.Rankings.from_dict(data_dict=ranking_response)
 
     """
     Subsets
@@ -191,6 +232,29 @@ class Rankade(object):
 
     async def get_subsets(self) -> models.Subsets:
         """Return a list of all of a groups subsets."""
-        async with self._api as api:
-            subsets_attributes = await api.request(endpoint=Endpoint.SUBSET)
-            return models.Subsets.from_dict(data_dict=subsets_attributes)
+        subsets_attributes = await self._api.request(endpoint=Endpoint.SUBSET)
+        return models.Subsets.from_dict(data_dict=subsets_attributes)
+
+    async def __aenter__(self) -> Rankade:
+        """
+        :::{versionadded} 0.2.0
+        :::
+        Entry handler for context manager.
+        """
+        await self.start()
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> Union[bool, None]:
+        """
+        :::{versionadded} 0.2.0
+        :::
+        Cleanup handler for context manager.
+        """
+        # Do not return 'True' here or exceptions will be supressed.
+        # https://docs.python.org/3/reference/datamodel.html?#object.__exit__
+        await self.stop()

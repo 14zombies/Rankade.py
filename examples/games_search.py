@@ -15,23 +15,23 @@ async def main():
     key = os.getenv("RANKADE_KEY", "")
     secret = os.getenv("RANKADE_SECRET", "")
     search_term = "Twilight Imperium"
-    rankade_api = rankade.Rankade(key_or_token=key, secret=secret)
-    result = await rankade_api.game_search(name=search_term)
-    print(result[0])
+    async with rankade.Rankade(key_or_token=key, secret=secret) as rankade_api:
+        result = await rankade_api.game_search(name=search_term)
+        print(result[0])
 
-    """
-    At the time of writing this would give the following output:
+        """
+        At the time of writing this would give the following output:
 
-    Game(
-        id=962,
-        name='Twilight Imperium (Third Edition)',
-        weight='normal',
-        weightLabel='Normal',
-        mediumImage='https://userscontents.rankade.com/images/500/...',
-        thumbnail='https://cf.geekdo-images.com/thumb/img/...',
-        bggIdGame=12493
-    )
-    """
+        Game(
+            id=962,
+            name='Twilight Imperium (Third Edition)',
+            weight='normal',
+            weightLabel='Normal',
+            mediumImage='https://userscontents.rankade.com/images/500/...',
+            thumbnail='https://cf.geekdo-images.com/thumb/img/...',
+            bggIdGame=12493
+        )
+        """
 
 
 if __name__ == "__main__":

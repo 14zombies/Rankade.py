@@ -22,9 +22,9 @@ import asyncio
 import rankade
 
 async def main():
-    rankade = rankade.Rankade(key="rankade-key", secret="rankade-secret")
-    result = rankade.get_games()
-    print(result)
+    async with rankade.Rankade(key="rankade-key", secret="rankade-secret") as rank:
+      result = rank.get_games()
+      print(result)
 
 if __name__ == '__main__'
     asyncio.run(main())

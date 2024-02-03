@@ -4,20 +4,12 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import (
-    Any,
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    ParamSpec,
-    TypeAlias,
-    Union,
-)
+from typing import Any, Dict, List, MutableMapping, Optional, TypeAlias, Union
 
 import aiohttp
 
-from .. import RankadeExceptions
+from rankade import RankadeExceptions
+
 from ..Consts import (
     AUTH_ERROR_PREFIX,
     AUTH_ERROR_STATUS,
@@ -46,24 +38,10 @@ PARAMS: TypeAlias = Dict[str, str | int] | None
 
 @dataclass()
 class Api(object):
-    """Wrapper around aiohttp.
+    """
+    Wrapper around aiohttp.
 
-    It manages the aiohttp ClientSession, Authorisation, and requests to the Rankade API.
-    It is generally best to use this as a context manager as it will manage the creation and cleanup of the ClientSession.
-
-    ```python
-        async with Api(...) as api:
-            result = api.request(...)
-    ```
-    It can also be used without the context manager, if you are managing the ClientSession & error handling yourself.
-
-    ```python
-        api = Api(...)
-        async api.start()
-        async api.request(...)
-        ...
-        async api.stop()
-    ```
+    It manages Authorisation and requests to the Rankade API.
     """
 
     _base_url: str
@@ -88,7 +66,7 @@ class Api(object):
         :param str key_or_token: Rankade key or token.
         :param Optional[str] secret: Rankade secret.
         :param Optional[str] base_url: Scheme and Resource to send requests to. Defaults to "https://api.rankade.com/public/api/1/"
-        :param Optional[aiohttp.ClientSession] session: aiohttp ClientSession to use, will create one if not passed in.
+        :param Optional[aiohttp.ClientSession] session: aiohttp ClientSession to use.
         """
         if not key_or_token or (not isinstance(secret, (str, type(None)))):
             raise RankadeExceptions.NoValidCredentials()
@@ -104,6 +82,8 @@ class Api(object):
     @property
     def _credentials_params(self) -> PARAMS:
         """A dictionary containing the key and secret for Rankade API for use as parameters in the http request."""
+        if self._key is None or self._secret is None:
+            raise RankadeExceptions.NoValidCredentials()
         return {"key": self._key, "secret": self._secret}
 
     @property
@@ -185,6 +165,7 @@ class Api(object):
             params=endpoint.params,
             headers=endpoint.headers,
             json=endpoint.json,
+            raise_for_status=self._check_request,
         ) as raw_response:
             try:
                 logger.debug(f"Made request {endpoint} {endpoint.page or ""}")
@@ -292,41 +273,3 @@ class Api(object):
         else:
             logger.debug("Endpoint is not pageinated.")
             return await self._request(endpoint_request)
-
-    def start(self):
-        """
-        Creates a Client session if none was passed through.
-
-        :::{note}
-        Should only be called manually if not using API as a context manager.
-        :::
-        """
-        if self._session is None or self._session.closed:
-            logger.debug("Creating ClientSession.")
-            self._session = aiohttp.ClientSession(raise_for_status=self._check_request)
-
-    async def stop(self):
-        """
-        Closes the Api session.
-
-        :::{note}
-        Should only be called manually if not using API as a context manager.
-        :::
-
-        """
-        if self._session:
-            logger.debug("Closing ClientSession.")
-            await self._session.close()
-
-    async def __aenter__(self):
-        """Entry handler for context manager."""
-        logger.debug("Context started.")
-        self.start()
-        return self
-
-    async def __aexit__(self, *_):
-        """Cleanup handler for context manager."""
-        logger.debug("Context finishing.")
-        # Do not return 'True' here or exceptions will be supressed.
-        # https://docs.python.org/3/reference/datamodel.html?#object.__exit__
-        await self.stop()
